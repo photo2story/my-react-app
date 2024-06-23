@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import './App.css';
-import './scripts.js'; // 기존 JS 파일을 src 폴더로 이동시키고 import 합니다.
+import $ from 'jquery';
+import 'jquery-ui/ui/widgets/autocomplete';
 
 function App() {
   useEffect(() => {
-    // 기존 스크립트의 로직을 여기에 넣습니다.
     loadReviews();
 
     const stockInput = document.getElementById('stockName');
