@@ -1,82 +1,107 @@
-import React, { useEffect } from 'react';
-import './App.css';
+import React, { useState, useEffect } from 'react';
 import $ from 'jquery';
 import 'jquery-ui/ui/widgets/autocomplete';
+import './App.css';
 
-const App = () => {
-  const [stockName, setStockName] = useState('');
+function App() {
+    const [stockName, setStockName] = useState('');
 
-  useEffect(() => {
-    $('#stockName').autocomplete({
-      source: function (request, response) {
-        $.ajax({
-          url: 'http://localhost:3000/api/get_tickers',
-          method: 'GET',
-          dataType: 'json',
-          success: function (data) {
-            const filteredData = $.map(data, function (item) {
-              if (item.Symbol.toUpperCase().includes(request.term.toUpperCase()) ||
-                item.Name.toUpperCase().includes(request.term.toUpperCase())) {
-                return {
-                  label: `${item.Symbol} - ${item.Name} - ${item.Market} - ${item.Sector} - ${item.Industry}`,
-                  value: item.Symbol
-                };
-              } else {
-                return null;
-              }
-            });
-            response(filteredData);
-          },
-          error: function () {
-            console.error('Error fetching tickers');
-          }
+    useEffect(() => {
+        const stockInput = $('#stockName');
+
+        stockInput.on('input', function() {
+            this.value = this.value.toUpperCase();
         });
-      },
-      select: function (event, ui) {
-        setStockName(ui.item.value);
-        $('#searchReviewButton').click();
-        return false;
-      }
-    });
 
-    $('#stockName').on('keypress', function (e) {
-      if (e.which === 13) { // Enter key
-        $('#searchReviewButton').click();
-        return false;
-      }
-    });
-  }, []);
+        stockInput.autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: "/api/get_tickers", // Adjust the URL as per your backend route
+                    method: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        var filteredData = $.map(data, function(item) {
+                            if (item.Symbol.toUpperCase().includes(request.term.toUpperCase()) ||
+                                item.Name.toUpperCase().includes(request.term.toUpperCase())) {
+                                return {
+                                    label: item.Symbol + " - " + item.Name + " - " + item.Market + " - " + item.Sector + " - " + item.Industry,
+                                    value: item.Symbol
+                                };
+                            } else {
+                                return null;
+                            }
+                        });
+                        response(filteredData);
+                    },
+                    error: function() {
+                        console.error("Error fetching tickers");
+                    }
+                });
+            },
+            select: function(event, ui) {
+                stockInput.val(ui.item.value);
+                $('#searchReviewButton').click();
+                return false;
+            }
+        });
 
-  const handleSearch = () => {
-    const reviewList = $('#reviewList');
-    const reviewItems = reviewList.find('.review');
-    let stockFound = false;
+        stockInput.on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                $('#searchReviewButton').click();
+                return false;
+            }
+        });
 
-    reviewItems.each(function () {
-      const reviewItem = $(this);
-      if (reviewItem.find('h3').text().includes(stockName.toUpperCase())) {
-        reviewItem[0].scrollIntoView({ behavior: 'smooth' });
-        stockFound = true;
-        return false; // break the loop
-      }
-    });
+        $('#searchReviewButton').click(function() {
+            const stockName = stockInput.val().toUpperCase();
+            const reviewList = $('#reviewList');
+            const reviewItems = reviewList.find('.review');
+            let stockFound = false;
 
-    if (!stockFound) {
-      alert('Review is being prepared. Please try again later.');
-    }
-  };
+            reviewItems.each(function() {
+                const reviewItem = $(this);
+                if (reviewItem.find('h3').text().includes(stockName)) {
+                    reviewItem[0].scrollIntoView({ behavior: 'smooth' });
+                    stockFound = true;
+                    return false; // break the loop
+                }
+            });
 
-  return (
-    <div>
-      <h1>Stock Comparison Review</h1>
-      <label htmlFor="stockName">Stock name:</label>
-      <input type="text" id="stockName" name="stockName" value={stockName} onChange={(e) => setStockName(e.target.value)} />
-      <button id="searchReviewButton" onClick={handleSearch}>Search Review</button>
-      <div id="reviewList">
-        {/* 리뷰 목록이 여기 표시됩니다 */}
-      </div>
-    </div>
-  );
-};
+            if (!stockFound) {
+                saveToSearchHistory(stockName);
+                alert('Review is being prepared. Please try again later.');
+            }
+        });
+
+        function saveToSearchHistory(stockName) {
+            $.ajax({
+                url: '/save_search_history',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ stock_name: stockName }),
+                success: function(data) {
+                    if (data.success) {
+                        console.log(`Saved ${stockName} to search history.`);
+                    } else {
+                        console.error('Failed to save to search history.');
+                    }
+                },
+                error: function() {
+                    console.error('Error saving to search history');
+                }
+            });
+        }
+    }, []);
+
+    return (
+        <div className="App">
+            <h1>Stock Comparison Review</h1>
+            <label htmlFor="stockName">Stock name:</label>
+            <input type="text" id="stockName" name="stockName" value={stockName} onChange={(e) => setStockName(e.target.value)} />
+            <button id="searchReviewButton">Search Review</button>
+            <div id="reviewList"></div>
+        </div>
+    );
+}
 
 export default App;
