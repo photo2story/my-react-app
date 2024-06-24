@@ -1,7 +1,7 @@
 # app.py
 from flask import Flask, send_from_directory
 from flask import render_template
-from flask import request, jsonify
+from flask import jsonify
 from flask_cors import CORS
 from threading import Thread
 import os
@@ -14,8 +14,7 @@ import sys
 import certifi
 import threading
 import logging
-# from celery import Celery
-logging.basicConfig(level=logging.INFO)
+
 
 # 콘솔 출력 인코딩을 UTF-8로 설정
 sys.stdout.reconfigure(encoding='utf-8')
@@ -41,36 +40,12 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
-
-# Celery 설정
-# app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-# app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-# celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-# celery.conf.update(app.config)
-
-# @celery.task
-# def long_running_task():
-#     # 오래 걸리는 작업을 여기에 작성
-#     pass
-
-# @app.route("/start-task")
-# def start_task():
-#     task = long_running_task.apply_async()
-#     return jsonify({"task_id": task.id}), 202
-
-# @app.route("/api/data")
-# def get_data():
-#     sample_data = {"message": "Hello from Flask!"}
-#     return jsonify(sample_data)
+# CORS(app)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# @app.route('/static/<path:filename>')
-# def static_files(filename):
-#     return send_from_directory('static', filename)
 
 @app.route('/static/<path:filename>')
 def static_files(filename):
