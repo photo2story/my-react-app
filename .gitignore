@@ -165,4 +165,4 @@ node_modules/
 # build/
 .env
 # React 빌드 폴더 무시 해제
-!my-react-app/build/
+!build/
