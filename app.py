@@ -39,16 +39,19 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 # 환경 변수 로드
 load_dotenv()
 
-app = Flask(__name__, static_folder='my-react-app/build', static_url_path='')
-# CORS(app)
+app = Flask(__name__, static_folder='../my-react-app/build')
+CORS(app)
 
 @app.route('/')
-def index():
+def serve():
     return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/static/<path:filename>')
-def static_files(filename):
-    return send_from_directory('static', filename)
+@app.route('/<path:path>')
+def static_proxy(path):
+    """
+    다른 경로에 대한 정적 파일 제공
+    """
+    return send_from_directory(app.static_folder, path)
 
 @app.route('/save_search_history', methods=['POST'])
 def save_search_history():
