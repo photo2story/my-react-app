@@ -40,12 +40,12 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 # 환경 변수 로드
 load_dotenv()
 
-app = Flask(__name__, static_folder='build', static_url_path='')
-CORS(app)
+app = Flask(__name__, static_folder='build')
+# CORS(app)
 
 @app.route('/')
 def serve():
-    return send_file('build/index.html')
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/save_search_history', methods=['POST'])
 def save_search_history():
