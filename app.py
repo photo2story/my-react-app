@@ -198,7 +198,16 @@ async def ping(ctx):
         return
     await ctx.send(f'pong: {bot.user.name}')
 
+@app.route('/execute_discord_command', methods=['POST'])
+def execute_discord_command():
+    data = request.json
+    stock_name = data.get('stock_name')
+    asyncio.run(send_discord_command(stock_name))
+    return jsonify({'success': True})
 
+async def send_discord_command(stock_name):
+    channel = bot.get_channel(int(DISCORD_CHANNEL_ID))
+    await channel.send(f'!stock {stock_name}')
     
 def run_discord_bot():
     bot.run(TOKEN)

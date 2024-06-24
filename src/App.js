@@ -96,26 +96,29 @@ const App = () => {
     });
 
     if (!stockFound) {
-      saveToSearchHistory(stockName);
-      alert('Review is being prepared. Please try again later.');
+      checkStockImageAndExecuteCommand(stockName);
     }
   };
 
-  const saveToSearchHistory = (stockName) => {
+  const checkStockImageAndExecuteCommand = (stockName) => {
     $.ajax({
-      url: 'http://localhost:8080/save_search_history',
-      method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({ stock_name: stockName }),
+      url: `/check_stock_image/${stockName}`,
+      method: 'GET',
       success: (data) => {
-        if (data.success) {
-          console.log(`Saved ${stockName} to search history.`);
+        if (data.exists) {
+          window.location.href = data.url;
         } else {
-          console.error('Failed to save to search history.');
+          alert('이미지를 찾을 수 없습니다. 디스코드 명령을 실행합니다.');
+          $.ajax({
+            url: '/execute_discord_command',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ stock_name: stockName })
+          });
         }
       },
       error: () => {
-        console.error('Error saving to search history');
+        console.error('Error checking stock image');
       }
     });
   };
