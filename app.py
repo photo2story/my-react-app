@@ -39,12 +39,13 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 # 환경 변수 로드
 load_dotenv()
 
-app = Flask(__name__)
-# CORS(app)
+# app = Flask(__name__)
+app = Flask(__name__, static_folder='my-react-app/build', static_url_path='')
+CORS(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return app.send_static_file('index.html')
 
 
 @app.route('/static/<path:filename>')
@@ -68,32 +69,15 @@ def get_images():
             images.append(filename)
     return jsonify(images)
 
-# 전송된 메시지를 기록하기 위한 딕셔너리
-sent_messages = {}
-
-# 메시지 기록을 일정 시간 후 초기화하는 함수
-def reset_sent_messages():
-    global sent_messages
-    sent_messages = {}
-    threading.Timer(10.0, reset_sent_messages).start()
-
-# 처음 시작할 때 메시지 기록 초기화 타이머 시작
-reset_sent_messages()
-
 # Discord 설정
 TOKEN = os.getenv('DISCORD_APPLICATION_TOKEN')
 CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 
 intents = discord.Intents.all()
 intents.message_content = True
-# client = discord.Client(intents=intents)
 bot = commands.Bot(command_prefix='', intents=intents)
 
 # Backtesting 관련 코드
-from datetime import datetime
-from estimate_stock import estimate_stock, estimate_snp
-from Results_plot import plot_comparison_results
-from get_ticker import get_ticker_name, get_ticker_from_korean_name
 
 stocks = ['QQQ', 'NVDA', 'BAC', 'COIN']
 start_date = "2022-01-01"
@@ -101,14 +85,6 @@ end_date = datetime.today().strftime('%Y-%m-%d')
 initial_investment = 30000000
 monthly_investment = 1000000
 
-# 처리된 메시지 ID를 저장하는 세트
-processed_message_ids = set()
-def is_processed(message_id):
-    if message_id in processed_message_ids:
-        return True
-    else:
-        processed_message_ids.add(message_id)
-        return False
 
 async def backtest_and_send(ctx, stock, option_strategy):
     total_account_balance, total_rate, str_strategy, invested_amount, str_last_signal, min_stock_data_date, file_path, result_df = estimate_stock(
