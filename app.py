@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, send_from_directory
-from flask import send_file
+from flask import send_file, render_template_string
 from flask import render_template
 from flask import jsonify
 from flask_cors import CORS
@@ -45,7 +45,7 @@ CORS(app)
 
 @app.route('/')
 def serve():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_file('build/index.html')
 
 @app.route('/save_search_history', methods=['POST'])
 def save_search_history():
