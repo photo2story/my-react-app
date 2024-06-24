@@ -44,14 +44,18 @@ CORS(app)
 
 @app.route('/')
 def serve():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_file(os.path.join(app.static_folder, 'index.html'))
 
 @app.route('/<path:path>')
 def static_proxy(path):
     """
     다른 경로에 대한 정적 파일 제공
     """
-    return send_from_directory(app.static_folder, path)
+    file_path = os.path.join(app.static_folder, path)
+    if os.path.exists(file_path):
+        return send_file(file_path)
+    else:
+        return send_file(os.path.join(app.static_folder, 'index.html'))
 
 @app.route('/save_search_history', methods=['POST'])
 def save_search_history():
