@@ -39,7 +39,7 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 # 환경 변수 로드
 load_dotenv()
 
-app = Flask(__name__, static_folder='../my-react-app/build')
+app = Flask(__name__, static_folder='my-react-app/build', template_folder='my-react-app/build')
 CORS(app)
 
 @app.route('/')
