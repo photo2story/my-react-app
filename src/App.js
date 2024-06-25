@@ -127,39 +127,41 @@ const App = () => {
 
   return (
     <div className="App">
-      <h1>Stock Comparison Review</h1>
-      <div>
-        <label htmlFor="stockName">Stock name:</label>
-        <input
-          type="text"
-          id="stockName"
-          value={stockName}
-          onChange={e => setStockName(e.target.value.toUpperCase())}
-          onKeyPress={handleKeyPress}
-        />
-        <button id="searchReviewButton" onClick={() => searchReview(stockName)}>Search Review</button>
-      </div>
-      {loading && <div>Loading...</div>}
-      {filteredTickers.length > 0 && (
-        <select
-          size={10}
-          onChange={e => setStockName(e.target.value)}
-        >
-          {filteredTickers.map(ticker => (
-            <option key={ticker.Symbol} value={ticker.Symbol}>
-              {ticker.Symbol} - {ticker.Name}
-            </option>
-          ))}
-        </select>
-      )}
-      {searchResults.length > 0 && (
-        <div>
-          <button onClick={handlePreviousResult}>Previous</button>
-          <span>{`${currentResultIndex + 1}/${searchResults.length}`}</span>
-          <button onClick={handleNextResult}>Next</button>
+      <div className="fixed-header">
+        <h1>Stock Comparison Review</h1>
+        <div className="search-container">
+          <label htmlFor="stockName">Stock name:</label>
+          <input
+            type="text"
+            id="stockName"
+            value={stockName}
+            onChange={e => setStockName(e.target.value.toUpperCase())}
+            onKeyPress={handleKeyPress}
+          />
+          <button id="searchReviewButton" onClick={() => searchReview(stockName)}>Search Review</button>
         </div>
-      )}
-      <div id="reviewList"></div>
+        {loading && <div>Loading...</div>}
+        {filteredTickers.length > 0 && (
+          <select
+            size={10}
+            onChange={e => setStockName(e.target.value)}
+          >
+            {filteredTickers.map(ticker => (
+              <option key={ticker.Symbol} value={ticker.Symbol}>
+                {ticker.Symbol} - {ticker.Name}
+              </option>
+            ))}
+          </select>
+        )}
+        {searchResults.length > 0 && (
+          <div>
+            <button onClick={handlePreviousResult}>Previous</button>
+            <span>{`${currentResultIndex + 1}/${searchResults.length}`}</span>
+            <button onClick={handleNextResult}>Next</button>
+          </div>
+        )}
+      </div>
+      <div id="reviewList" style={{ paddingTop: '150px' }}></div> {/* 추가된 패딩 */}
     </div>
   );
 };
