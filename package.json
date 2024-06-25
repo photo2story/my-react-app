@@ -8,6 +8,7 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-scripts": "^5.0.1",
+    "homepage": "https://github.com/photo2story/my-react-app",
     "web-vitals": "^4.2.0"
   },
   "scripts": {
