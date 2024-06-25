@@ -78,7 +78,7 @@ const App = () => {
   };
 
   const showMplChart = (stockName) => {
-    const url = `https://raw.githubusercontent.com/photo2story/my-react-app/result_mpl_${stockName}.png`;
+    const url = `https://api.github.com/repos/photo2story/my-react-app/result_mpl_${stockName}.png`;
     window.open(url, '_blank');
   };
 
