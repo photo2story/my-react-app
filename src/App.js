@@ -5,118 +5,123 @@ import './App.css';
 
 const App = () => {
   const [stockName, setStockName] = useState('');
-  const [stockFound, setStockFound] = useState(true);
+  const [tickers, setTickers] = useState([]);
+  const [filteredTickers, setFilteredTickers] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [currentResultIndex, setCurrentResultIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadReviews();
-
-    $('#stockName').autocomplete({
-      source: (request, response) => {
-        $.ajax({
-          url: 'http://localhost:5000/api/get_tickers',
-          method: 'GET',
-          dataType: 'json',
-          success: (data) => {
-            const filteredData = data.filter(item =>
-              item.Symbol.toUpperCase().includes(request.term.toUpperCase()) ||
-              item.Name.toUpperCase().includes(request.term.toUpperCase())
-            ).map(item => ({
-              label: `${item.Symbol} - ${item.Name} - ${item.Market} - ${item.Sector} - ${item.Industry}`,
-              value: item.Symbol
-            }));
-            response(filteredData);
-          },
-          error: () => {
-            console.error('Error fetching tickers');
-          }
-        });
-      },
-      select: (event, ui) => {
-        setStockName(ui.item.value);
-        searchReview(ui.item.value);
-        return false;
-      }
-    });
-
-    $('#stockName').on('input', function () {
-      this.value = this.value.toUpperCase();
-      setStockName(this.value);
-    });
-
-    $('#stockName').on('keypress', function (e) {
-      if (e.which === 13) {
-        searchReview(this.value);
-        return false;
-      }
-    });
-
-    $('#searchReviewButton').click(() => {
-      searchReview(stockName);
-    });
+    loadTickers();
   }, []);
+
+  useEffect(() => {
+    filterTickers(stockName);
+  }, [stockName, tickers]);
+
+  const loadTickers = () => {
+    $.ajax({
+      url: 'http://localhost:8080/api/get_tickers',
+      method: 'GET',
+      dataType: 'json',
+      success: (data) => {
+        setTickers(data);
+      },
+      error: () => {
+        console.error('Error fetching tickers');
+      }
+    });
+  };
+
+  const filterTickers = (input) => {
+    const filtered = tickers.filter(ticker =>
+      ticker.Symbol.toUpperCase().includes(input.toUpperCase()) ||
+      ticker.Name.toUpperCase().includes(input.toUpperCase())
+    );
+    setFilteredTickers(filtered);
+  };
 
   const loadReviews = () => {
     const reviewList = $('#reviewList');
-    reviewList.empty(); // 기존 리뷰 요소 제거
-    const exampleData = [
-      { name: 'TSLA', url: 'https://photo2story.github.io/my-react-app/comparison_tsla_VOO.png' },
-      { name: 'AAPL', url: 'https://photo2story.github.io/my-react-app/comparison_aapl_VOO.png' },
-    ];
-
-    exampleData.forEach(file => {
-      const stockName = file.name;
-      const newReview = $(`
-        <div class="review" id="review-${stockName}">
-          <h3>${stockName} vs VOO</h3>
-          <img id="image-${stockName}" src="${file.url}" alt="${stockName} vs VOO" style="width: 100%;" />
-        </div>
-      `);
-      reviewList.append(newReview);
-      $(`#image-${stockName}`).on('click', () => {
-        showMplChart(stockName);
-        console.log(`ID: review-${stockName}, Stock Name: ${stockName}`);
+    $.getJSON('https://api.github.com/repos/photo2story/my-react-app/contents/', (data) => {
+      data.forEach(file => {
+        if (file.name.startsWith('comparison_') && file.name.endsWith('.png')) {
+          const stockName = file.name.replace('comparison_', '').replace('_VOO.png', '').toUpperCase();
+          const newReview = $(`
+            <div class="review" id="review-${stockName}">
+              <h3>${stockName} vs VOO</h3>
+              <img id="image-${stockName}" src="${file.download_url}" alt="${stockName} vs VOO" style="width: 100%;">
+            </div>
+          `);
+          reviewList.append(newReview);
+          $(`#image-${stockName}`).on('click', () => {
+            showMplChart(stockName);
+          });
+        }
       });
+    }).fail(() => {
+      console.error('Error fetching the file list');
     });
   };
 
   const showMplChart = (stockName) => {
-    const url = `https://photo2story.github.io/my-react-app/result_mpl_${stockName}.png`;
+    const url = `https://raw.githubusercontent.com/photo2story/my-react-app/main/result_mpl_${stockName}.png`;
     window.open(url, '_blank');
   };
 
   const searchReview = (stockName) => {
-    console.log(`Searching for: ${stockName}`);
+    setLoading(true);
     const reviewList = $('#reviewList');
     const reviewItems = reviewList.find('.review');
-    let stockFound = false;
+    const results = [];
 
-    // ID를 기반으로 찾기
-    const reviewElement = document.getElementById(`review-${stockName}`);
-    console.log(`Review element for ${stockName}:`, reviewElement); // 디버그용 로그
+    reviewItems.each(function () {
+      const reviewItem = $(this);
+      const reviewText = reviewItem.find('h3').text().split(' ')[0];
+      if (reviewText === stockName) {
+        results.push(reviewItem[0]);
+      }
+    });
 
-    if (reviewElement) {
-      console.log(`Scrolling to: review-${stockName}`); // 디버그용 로그
-      reviewElement.scrollIntoView({ behavior: 'smooth' });
-      alert(`${stockName}로 이동합니다.`);
-      stockFound = true;
+    if (results.length > 0) {
+      setSearchResults(results);
+      setCurrentResultIndex(0);
+      scrollToResult(0, results);
     } else {
-      // 텍스트를 기반으로 찾기
-      reviewItems.each(function () {
-        const reviewItem = $(this);
-        if (reviewItem.find('h3').text().includes(stockName.toUpperCase())) {
-          console.log(`Scrolling to element with text: ${stockName}`); // 디버그용 로그
-          reviewItem[0].scrollIntoView({ behavior: 'smooth' });
-          alert(`${stockName}로 이동합니다.`);
-          stockFound = true;
-          return false; // 루프 종료
-        }
-      });
+      setSearchResults([]);
+      alert('해당 주식 리뷰를 찾을 수 없습니다.');
     }
+    setLoading(false);
+  };
 
-    setStockFound(stockFound);
+  const scrollToResult = (index, results) => {
+    const reviewElement = results[index];
+    if (reviewElement) {
+      reviewElement.scrollIntoView({ behavior: 'smooth' });
+      reviewElement.style.backgroundColor = 'yellow';  // Highlight the found review
+    }
+  };
 
-    if (!stockFound) {
-      alert(`${stockName} 리뷰를 찾을 수 없습니다. 준비 중입니다.`);
+  const handleNextResult = () => {
+    if (searchResults.length > 0) {
+      const nextIndex = (currentResultIndex + 1) % searchResults.length;
+      setCurrentResultIndex(nextIndex);
+      scrollToResult(nextIndex, searchResults);
+    }
+  };
+
+  const handlePreviousResult = () => {
+    if (searchResults.length > 0) {
+      const prevIndex = (currentResultIndex - 1 + searchResults.length) % searchResults.length;
+      setCurrentResultIndex(prevIndex);
+      scrollToResult(prevIndex, searchResults);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      searchReview(stockName);
     }
   };
 
@@ -129,11 +134,31 @@ const App = () => {
           type="text"
           id="stockName"
           value={stockName}
-          onChange={e => setStockName(e.target.value)}
+          onChange={e => setStockName(e.target.value.toUpperCase())}
+          onKeyPress={handleKeyPress}
         />
-        <button id="searchReviewButton">Search Review</button>
+        <button id="searchReviewButton" onClick={() => searchReview(stockName)}>Search Review</button>
       </div>
-      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다.</div>}
+      {loading && <div>Loading...</div>}
+      {filteredTickers.length > 0 && (
+        <select
+          size={10}
+          onChange={e => setStockName(e.target.value)}
+        >
+          {filteredTickers.map(ticker => (
+            <option key={ticker.Symbol} value={ticker.Symbol}>
+              {ticker.Symbol} - {ticker.Name}
+            </option>
+          ))}
+        </select>
+      )}
+      {searchResults.length > 0 && (
+        <div>
+          <button onClick={handlePreviousResult}>Previous</button>
+          <span>{`${currentResultIndex + 1}/${searchResults.length}`}</span>
+          <button onClick={handleNextResult}>Next</button>
+        </div>
+      )}
       <div id="reviewList"></div>
     </div>
   );
