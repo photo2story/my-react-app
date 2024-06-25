@@ -13,7 +13,7 @@ const App = () => {
     $('#stockName').autocomplete({
       source: (request, response) => {
         $.ajax({
-          url: 'http://localhost:8080/api/get_tickers',
+          url: 'http://localhost:5000/api/get_tickers',
           method: 'GET',
           dataType: 'json',
           success: (data) => {
@@ -33,18 +33,19 @@ const App = () => {
       },
       select: (event, ui) => {
         setStockName(ui.item.value);
-        $('#searchReviewButton').click();
+        searchReview(ui.item.value);
         return false;
       }
     });
 
     $('#stockName').on('input', function () {
       this.value = this.value.toUpperCase();
+      setStockName(this.value);
     });
 
     $('#stockName').on('keypress', function (e) {
       if (e.which === 13) {
-        $('#searchReviewButton').click();
+        searchReview(this.value);
         return false;
       }
     });
@@ -56,78 +57,64 @@ const App = () => {
 
   const loadReviews = () => {
     const reviewList = $('#reviewList');
-    $.getJSON('https://api.github.com/repos/photo2story/my-react-app/contents/', (data) => {
-      data.forEach(file => {
-        if (file.name.startsWith('comparison_') && file.name.endsWith('.png')) {
-          const stockName = file.name.replace('comparison_', '').replace('_VOO.png', '').toUpperCase();
-          const newReview = $(`
-            <div class="review" id="review-${stockName}">
-              <h3>${stockName} vs VOO</h3>
-              <img id="image-${stockName}" src="${file.download_url}" alt="${stockName} vs VOO" style="width: 100%;">
-            </div>
-          `);
-          reviewList.append(newReview);
-          $(`#image-${stockName}`).on('click', () => {
-            showMplChart(stockName);
-          });
-        }
+    const exampleData = [
+      { name: 'TSLA', url: 'https://via.placeholder.com/150?text=TSLA' },
+      { name: 'AAPL', url: 'https://via.placeholder.com/150?text=AAPL' },
+    ];
+
+    exampleData.forEach(file => {
+      const stockName = file.name;
+      const newReview = $(`
+        <div class="review" id="review-${stockName}">
+          <h3>${stockName} vs VOO</h3>
+          <img id="image-${stockName}" src="${file.url}" alt="${stockName} vs VOO" style="width: 100%;" />
+        </div>
+      `);
+      reviewList.append(newReview);
+      $(`#image-${stockName}`).on('click', () => {
+        showMplChart(stockName);
+        console.log(`ID: review-${stockName}, Stock Name: ${stockName}`);
       });
-    }).fail(() => {
-      console.error('Error fetching the file list');
     });
   };
 
   const showMplChart = (stockName) => {
-    const url = `https://raw.githubusercontent.com/photo2story/my-react-app/main/result_mpl_${stockName}.png`;
+    const url = `https://via.placeholder.com/150?text=result_mpl_${stockName}`;
     window.open(url, '_blank');
   };
 
   const searchReview = (stockName) => {
+    console.log(`Searching for: ${stockName}`);
     const reviewList = $('#reviewList');
     const reviewItems = reviewList.find('.review');
     let stockFound = false;
 
-    reviewItems.each(function () {
-      const reviewItem = $(this);
-      if (reviewItem.find('h3').text().includes(stockName)) {
-        const reviewElement = document.getElementById(`review-${stockName}`);
-        if (reviewElement) {
-          reviewElement.scrollIntoView({ behavior: 'smooth' });
-          alert(`${stockName} 로 이동합니다.`);
+    // ID를 기반으로 찾기
+    const reviewElement = document.getElementById(`review-${stockName}`);
+    console.log(`Review element for ${stockName}:`, reviewElement); // 디버그용 로그
+
+    if (reviewElement) {
+      reviewElement.scrollIntoView({ behavior: 'smooth' });
+      alert(`${stockName}로 이동합니다.`);
+      stockFound = true;
+    } else {
+      // 텍스트를 기반으로 찾기
+      reviewItems.each(function () {
+        const reviewItem = $(this);
+        if (reviewItem.find('h3').text().includes(stockName.toUpperCase())) {
+          reviewItem[0].scrollIntoView({ behavior: 'smooth' });
+          alert(`${stockName}로 이동합니다.`);
+          stockFound = true;
+          return false; // 루프 종료
         }
-        stockFound = true;
-        return false;
-      }
-    });
+      });
+    }
 
     setStockFound(stockFound);
 
     if (!stockFound) {
-      checkStockImageAndExecuteCommand(stockName);
+      alert(`${stockName} 리뷰를 찾을 수 없습니다. 준비 중입니다.`);
     }
-  };
-
-  const checkStockImageAndExecuteCommand = (stockName) => {
-    $.ajax({
-      url: `/check_stock_image/${stockName}`,
-      method: 'GET',
-      success: (data) => {
-        if (data.exists) {
-          window.location.href = data.url;
-        } else {
-          alert('이미지를 찾을 수 없습니다. 디스코드 명령을 실행합니다.');
-          $.ajax({
-            url: '/execute_discord_command',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ stock_name: stockName })
-          });
-        }
-      },
-      error: () => {
-        console.error('Error checking stock image');
-      }
-    });
   };
 
   return (
@@ -143,7 +130,6 @@ const App = () => {
         />
         <button id="searchReviewButton">Search Review</button>
       </div>
-      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다.</div>}
       <div id="reviewList"></div>
     </div>
   );

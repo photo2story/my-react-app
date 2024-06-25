@@ -41,7 +41,7 @@ os.environ['SSL_CERT_FILE'] = certifi.where()
 load_dotenv()
 
 app = Flask(__name__, static_folder='build')
-# CORS(app)
+CORS(app)
 
 @app.route('/')
 def serve():
@@ -67,6 +67,11 @@ def get_images():
         if filename.endswith('.png'):
             images.append(filename)
     return jsonify(images)
+
+@app.route('/api/get_tickers', methods=['GET'])# 티커 정보를 반환하는 API
+def get_tickers():# 티커 정보를 반환하는 함수
+    tickers = load_tickers() # 티커 정보를 불러옴
+    return jsonify(tickers) # JSON 형태로 반환
 
 # Discord 설정
 TOKEN = os.getenv('DISCORD_APPLICATION_TOKEN')
