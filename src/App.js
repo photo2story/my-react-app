@@ -53,13 +53,14 @@ const App = () => {
     $('#searchReviewButton').click(() => {
       searchReview(stockName);
     });
-  }, [stockName]);
+  }, []);
 
   const loadReviews = () => {
     const reviewList = $('#reviewList');
+    reviewList.empty(); // 기존 리뷰 요소 제거
     const exampleData = [
-      { name: 'TSLA', url: 'https://via.placeholder.com/150?text=TSLA' },
-      { name: 'AAPL', url: 'https://via.placeholder.com/150?text=AAPL' },
+      { name: 'TSLA', url: 'https://photo2story.github.io/my-react-app/comparison_tsla_VOO.png' },
+      { name: 'AAPL', url: 'https://photo2story.github.io/my-react-app/comparison_aapl_VOO.png' },
     ];
 
     exampleData.forEach(file => {
@@ -79,7 +80,7 @@ const App = () => {
   };
 
   const showMplChart = (stockName) => {
-    const url = `https://via.placeholder.com/150?text=result_mpl_${stockName}`;
+    const url = `https://photo2story.github.io/my-react-app/result_mpl_${stockName}.png`;
     window.open(url, '_blank');
   };
 
@@ -94,6 +95,7 @@ const App = () => {
     console.log(`Review element for ${stockName}:`, reviewElement); // 디버그용 로그
 
     if (reviewElement) {
+      console.log(`Scrolling to: review-${stockName}`); // 디버그용 로그
       reviewElement.scrollIntoView({ behavior: 'smooth' });
       alert(`${stockName}로 이동합니다.`);
       stockFound = true;
@@ -102,6 +104,7 @@ const App = () => {
       reviewItems.each(function () {
         const reviewItem = $(this);
         if (reviewItem.find('h3').text().includes(stockName.toUpperCase())) {
+          console.log(`Scrolling to element with text: ${stockName}`); // 디버그용 로그
           reviewItem[0].scrollIntoView({ behavior: 'smooth' });
           alert(`${stockName}로 이동합니다.`);
           stockFound = true;
@@ -130,6 +133,7 @@ const App = () => {
         />
         <button id="searchReviewButton">Search Review</button>
       </div>
+      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다.</div>}
       <div id="reviewList"></div>
     </div>
   );
