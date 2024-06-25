@@ -217,7 +217,11 @@ if __name__ == '__main__':
 .\.venv\Scripts\activate
 python app.py 
 
-git add runtime.txt
-git commit -m "Update Python runtime to a supported version"
+npm run build
+heroku login
+git init
+heroku git:remote -a he-react-app
+
+git commit -m "react build"
 git push heroku main
 """
