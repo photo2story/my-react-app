@@ -78,7 +78,7 @@ const App = () => {
   };
 
   const showMplChart = (stockName) => {
-    const url = `https://api.github.com/repos/photo2story/my-react-app/result_mpl_${stockName}.png`;
+    const url = `https://raw.githubusercontent.com/photo2story/my-react-app/main/result_mpl_${stockName}.png`;
     window.open(url, '_blank');
   };
 
@@ -96,11 +96,34 @@ const App = () => {
       }
     });
 
-    setStockFound(stockFound);
+    setStockFound(stockFound); // 주식 발견 여부 설정
 
     if (!stockFound) {
-      setStockFound(false); // 주식을 찾을 수 없을 때 경고 메시지 표시
+      checkStockImageAndExecuteCommand(stockName);
     }
+  };
+
+  const checkStockImageAndExecuteCommand = (stockName) => {
+    $.ajax({
+      url: `/check_stock_image/${stockName}`,
+      method: 'GET',
+      success: (data) => {
+        if (data.exists) {
+          window.location.href = data.url;
+        } else {
+          alert('이미지를 찾을 수 없습니다. 디스코드 명령을 실행합니다.');
+          $.ajax({
+            url: '/execute_discord_command',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ stock_name: stockName })
+          });
+        }
+      },
+      error: () => {
+        console.error('Error checking stock image');
+      }
+    });
   };
 
   return (
@@ -116,7 +139,7 @@ const App = () => {
         />
         <button id="searchReviewButton">Search Review</button>
       </div>
-      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다. 준비 중입니다.</div>} {/* 주식이 없는 경우 경고 메시지 표시 */}
+      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다.</div>} {/* 주식이 없는 경우 경고 메시지 표시 */}
       <div id="reviewList"></div>
     </div>
   );
