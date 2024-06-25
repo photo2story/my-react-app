@@ -1,10 +1,5 @@
-# app.py
-from flask import Flask, send_from_directory
-from flask import send_file, render_template_string
-from flask import render_template
-from flask import jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from threading import Thread
 import os
 from dotenv import load_dotenv
 import discord
@@ -16,23 +11,18 @@ import certifi
 import threading
 import logging
 
-
 # 콘솔 출력 인코딩을 UTF-8로 설정
 sys.stdout.reconfigure(encoding='utf-8')
 
 # 현재 디렉토리 경로를 시스템 경로에 추가
 sys.path.append(os.path.join(os.path.dirname(__file__), 'my-flask-app'))
-# Your Discord bot setup and run logic should follow here
+
 from datetime import datetime
-import pandas as pd
-import numpy as np
-from get_ticker import load_tickers, search_tickers, get_ticker_name, update_stock_market_csv
+from get_ticker import load_tickers, search_tickers, get_ticker_name, get_ticker_from_korean_name
 from estimate_stock import estimate_snp, estimate_stock
-from Results_plot import plot_comparison_results, plot_results_all
-from get_compare_stock_data import merge_csv_files, load_sector_info
+from Results_plot import plot_comparison_results
 from Results_plot_mpl import plot_results_mpl
-import xml.etree.ElementTree as ET
-from get_ticker import get_ticker_from_korean_name
+from get_compare_stock_data import merge_csv_files, load_sector_info
 
 # SSL 인증서 설정
 os.environ['SSL_CERT_FILE'] = certifi.where()
@@ -68,10 +58,10 @@ def get_images():
             images.append(filename)
     return jsonify(images)
 
-@app.route('/api/get_tickers', methods=['GET'])# 티커 정보를 반환하는 API
-def get_tickers():# 티커 정보를 반환하는 함수
-    tickers = load_tickers() # 티커 정보를 불러옴
-    return jsonify(tickers) # JSON 형태로 반환
+@app.route('/api/get_tickers', methods=['GET'])
+def get_tickers():
+    tickers = load_tickers()
+    return jsonify(tickers)
 
 # Discord 설정
 TOKEN = os.getenv('DISCORD_APPLICATION_TOKEN')
@@ -82,13 +72,11 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='', intents=intents)
 
 # Backtesting 관련 코드
-
 stocks = ['QQQ', 'NVDA', 'BAC', 'COIN']
 start_date = "2022-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d')
 initial_investment = 30000000
 monthly_investment = 1000000
-
 
 async def backtest_and_send(ctx, stock, option_strategy):
     total_account_balance, total_rate, str_strategy, invested_amount, str_last_signal, min_stock_data_date, file_path, result_df = estimate_stock(
@@ -188,14 +176,11 @@ async def show_all(ctx):
 @bot.event
 async def on_ready():
     if not hasattr(bot, 'is_logged_in'):
-        bot.is_logged_in = False
-    if not bot.is_logged_in:
+        bot.is_logged_in = True
         print(f'Logged in as {bot.user.name}')
         channel = bot.get_channel(int(CHANNEL_ID))
         if channel:
             await channel.send(f'Bot has successfully logged in: {bot.user.name}')
-        bot.is_logged_in = True
-
 
 @bot.command()
 async def ping(ctx):
@@ -215,13 +200,24 @@ async def send_discord_command(stock_name):
     await channel.send(f'!stock {stock_name}')
     
 def run_discord_bot():
-    bot.run(TOKEN)
+    if not getattr(bot, 'is_running', False):
+        bot.is_running = True
+        bot.run(TOKEN)
 
 # Discord Bot을 별도의 스레드에서 실행
-discord_thread = threading.Thread(target=run_discord_bot)
-discord_thread.start()
+if not hasattr(threading, 'discord_thread'):
+    discord_thread = threading.Thread(target=run_discord_bot)
+    discord_thread.start()
+    threading.discord_thread = discord_thread
 
 if __name__ == '__main__':
-    app.run(debug=True)
-# # # .\.venv\Scripts\activate
-# python app.py 
+    app.run()
+
+"""
+.\.venv\Scripts\activate
+python app.py 
+
+git add runtime.txt
+git commit -m "Update Python runtime to a supported version"
+git push heroku main
+"""
