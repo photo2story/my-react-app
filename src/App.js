@@ -5,7 +5,7 @@ import './App.css';
 
 const App = () => {
   const [stockName, setStockName] = useState('');
-  const [stockFound, setStockFound] = useState(true); // 주식 발견 여부 상태 추가
+  const [stockFound, setStockFound] = useState(true);
 
   useEffect(() => {
     loadReviews();
@@ -61,7 +61,7 @@ const App = () => {
         if (file.name.startsWith('comparison_') && file.name.endsWith('.png')) {
           const stockName = file.name.replace('comparison_', '').replace('_VOO.png', '').toUpperCase();
           const newReview = $(`
-            <div class="review">
+            <div class="review" id="review-${stockName}">
               <h3>${stockName} vs VOO</h3>
               <img id="image-${stockName}" src="${file.download_url}" alt="${stockName} vs VOO" style="width: 100%;">
             </div>
@@ -90,13 +90,17 @@ const App = () => {
     reviewItems.each(function () {
       const reviewItem = $(this);
       if (reviewItem.find('h3').text().includes(stockName)) {
-        reviewItem[0].scrollIntoView({ behavior: 'smooth' });
+        const reviewElement = document.getElementById(`review-${stockName}`);
+        if (reviewElement) {
+          reviewElement.scrollIntoView({ behavior: 'smooth' });
+          alert(`${stockName} 로 이동합니다.`);
+        }
         stockFound = true;
         return false;
       }
     });
 
-    setStockFound(stockFound); // 주식 발견 여부 설정
+    setStockFound(stockFound);
 
     if (!stockFound) {
       checkStockImageAndExecuteCommand(stockName);
@@ -139,7 +143,7 @@ const App = () => {
         />
         <button id="searchReviewButton">Search Review</button>
       </div>
-      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다.</div>} {/* 주식이 없는 경우 경고 메시지 표시 */}
+      {!stockFound && <div style={{ color: 'red' }}>해당 주식 리뷰를 찾을 수 없습니다.</div>}
       <div id="reviewList"></div>
     </div>
   );
