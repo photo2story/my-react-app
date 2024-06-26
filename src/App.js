@@ -22,7 +22,7 @@ const App = () => {
 
   const loadTickers = () => {
     $.ajax({
-      url: '/api/get_tickers',  // 루트 URL로 수정
+      url: 'http://localhost:8080/api/get_tickers',
       method: 'GET',
       dataType: 'json',
       success: (data) => {
@@ -44,34 +44,29 @@ const App = () => {
 
   const loadReviews = () => {
     const reviewList = $('#reviewList');
-
-    $.ajax({
-      url: '/api/get_images',
-      method: 'GET',
-      dataType: 'json',
-      success: (data) => {
-        data.forEach((image) => {
-          const stockName = image.replace('comparison_', '').replace('_VOO.png', '').toUpperCase();
+    $.getJSON('https://api.github.com/repos/photo2story/my-react-app/contents/', (data) => {
+      data.forEach(file => {
+        if (file.name.startsWith('comparison_') && file.name.endsWith('.png')) {
+          const stockName = file.name.replace('comparison_', '').replace('_VOO.png', '').toUpperCase();
           const newReview = $(`
             <div class="review" id="review-${stockName}">
               <h3>${stockName} vs VOO</h3>
-              <img id="image-${stockName}" src="/${image}" alt="${stockName} vs VOO" style="width: 100%;">
+              <img id="image-${stockName}" src="${file.download_url}" alt="${stockName} vs VOO" style="width: 100%;">
             </div>
           `);
           reviewList.append(newReview);
           $(`#image-${stockName}`).on('click', () => {
             showMplChart(stockName);
           });
-        });
-      },
-      error: () => {
-        console.error('Error fetching images');
-      }
+        }
+      });
+    }).fail(() => {
+      console.error('Error fetching the file list');
     });
   };
 
   const showMplChart = (stockName) => {
-    const url = `/result_mpl_${stockName}.png`;
+    const url = `https://raw.githubusercontent.com/photo2story/my-react-app/main/result_mpl_${stockName}.png`;
     window.open(url, '_blank');
   };
 
