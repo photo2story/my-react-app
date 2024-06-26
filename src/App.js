@@ -22,7 +22,7 @@ const App = () => {
 
   const loadTickers = () => {
     $.ajax({
-      url: 'http://localhost:8080/api/get_tickers',
+      url: 'https://photo2story.github.io/my-react-app/api/get_tickers',  // GitHub Pages URL로 수정
       method: 'GET',
       dataType: 'json',
       success: (data) => {
