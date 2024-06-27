@@ -227,6 +227,8 @@ if __name__ == '__main__':
 python app.py 
 
 npm run build
+
+
 heroku login
 git init
 heroku git:remote -a he-react-app
