@@ -5,11 +5,15 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import commands
 import asyncio
+import nest_asyncio
 import requests
 import sys
 import certifi
 import threading
 import logging
+
+# Nest_asyncio 적용
+nest_asyncio.apply()
 
 # 콘솔 출력 인코딩을 UTF-8로 설정
 sys.stdout.reconfigure(encoding='utf-8')
@@ -173,30 +177,10 @@ async def show_all(ctx):
         await ctx.send(f"An error occurred: {e}")
         print(f"Error: {e}")
 
-@bot.event
-async def on_ready():
-    if not hasattr(bot, 'is_logged_in'):
-        bot.is_logged_in = True
-        print(f'Logged in as {bot.user.name}')
-        channel = bot.get_channel(int(CHANNEL_ID))
-        if channel:
-            await channel.send(f'Bot has successfully logged in: {bot.user.name}')
-
 @bot.command()
 async def ping(ctx):
     await ctx.send(f'pong: {bot.user.name}')
 
-@app.route('/execute_discord_command', methods=['POST'])
-def execute_discord_command():
-    data = request.json
-    stock_name = data.get('stock_name')
-    asyncio.run(send_discord_command(stock_name))
-    return jsonify({'success': True})
-
-async def send_discord_command(stock_name):
-    channel = bot.get_channel(int(DISCORD_CHANNEL_ID))
-    await channel.send(f'!stock {stock_name}')
-    
 def run_discord_bot():
     if not getattr(bot, 'is_running', False):
         bot.is_running = True
@@ -208,7 +192,34 @@ if not hasattr(threading, 'discord_thread'):
     discord_thread.start()
     threading.discord_thread = discord_thread
 
+@app.route('/execute_discord_command', methods=['POST'])
+def execute_discord_command():
+    data = request.json
+    stock_name = data.get('stock_name')
+    asyncio.run_coroutine_threadsafe(send_ping_command(stock_name), bot.loop)
+    return jsonify({'success': True})
+
+async def send_ping_command(stock_name):
+    channel = bot.get_channel(int(CHANNEL_ID))
+    await channel.send(f'ping: {stock_name}')
+
+@bot.event
+async def on_ready():
+    if not hasattr(bot, 'is_logged_in'):
+        bot.is_logged_in = True
+        print(f'Logged in as {bot.user.name}')
+        channel = bot.get_channel(int(CHANNEL_ID))
+        if channel:
+            asyncio.run_coroutine_threadsafe(channel.send(f'Bot has successfully logged in: {bot.user.name}'), bot.loop)
+
+def run_discord_bot():
+    if not getattr(bot, 'is_running', False):
+        bot.is_running = True
+        bot.run(TOKEN)
+
 if __name__ == '__main__':
+    discord_thread = threading.Thread(target=run_discord_bot)
+    discord_thread.start()
     app.run()
 
 """
