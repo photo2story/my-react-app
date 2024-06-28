@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "gh-pages": "^6.1.1",
-    "homepage": "https://github.com/photo2story/my-react-app",
     "jquery": "^3.6.0",
     "jquery-ui": "^1.12.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-scripts": "^5.0.1",
+    "gh-pages": "^6.1.1",
     "web-vitals": "^4.2.0"
   },
   "scripts": {
@@ -18,9 +17,10 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "heroku-postbuild": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "heroku-postbuild": "npm run build"
   },
+  "homepage": "https://photo2story.github.io/my-react-app/",
   "browserslist": {
     "production": [
       ">0.2%",
