@@ -184,8 +184,6 @@ async def on_ready():
 
 @bot.command()
 async def ping(ctx):
-    if is_processed(ctx.message.id):
-        return
     await ctx.send(f'pong: {bot.user.name}')
 
 @app.route('/execute_discord_command', methods=['POST'])
